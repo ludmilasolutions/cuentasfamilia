@@ -147,19 +147,21 @@
             transform: none;
         }
 
-        /* Main Dashboard */
+        /* Main Dashboard - Mobile First */
         main {
             width: 100%;
             max-width: 1200px;
             display: grid;
-            grid-template-columns: 1fr 1.5fr;
-            gap: 30px;
-            padding: 0 20px 40px;
+            grid-template-columns: 1fr;
+            gap: 20px;
+            padding: 0 15px 40px;
         }
 
-        @media (max-width: 900px) {
+        @media (min-width: 900px) {
             main {
-                grid-template-columns: 1fr;
+                grid-template-columns: 1fr 1.5fr;
+                gap: 30px;
+                padding: 0 20px 40px;
             }
         }
 
@@ -432,7 +434,7 @@
             Una experiencia premium para gestionar tus cuentas diarias junto a tu familia.
         </p>
         <button id="login-btn" class="btn btn-google" style="padding: 15px 30px; font-size: 1rem;">
-            <img src="https://upload.wikimedia.org/wikipedia/commons/5/53/Google_%22G%22_Logo.svg" width="22">
+            <i class="fab fa-google" style="margin-right: 12px; font-size: 1.2rem; color: #4285F4;"></i>
             Iniciar sesión con Google
         </button>
     </div>
@@ -497,6 +499,8 @@
                             <option value="Salud">🏥 Salud y Cuidados</option>
                             <option value="Ocio">🎭 Entretenimiento</option>
                             <option value="Sueldo">💰 Sueldo / Ingreso</option>
+                            <option value="Alquiler">🏠 Alquiler / Hipoteca</option>
+                            <option value="Impuestos">📄 Impuestos / AFIP</option>
                             <option value="Transporte">🚗 Transporte</option>
                             <option value="Educacion">📚 Educación</option>
                             <option value="Otro">✨ Otros Gastos</option>
@@ -741,6 +745,8 @@
                 'Sueldo': 'fa-hand-holding-usd',
                 'Transporte': 'fa-bus',
                 'Educacion': 'fa-graduation-cap',
+                'Alquiler': 'fa-key',
+                'Impuestos': 'fa-receipt',
                 'Otro': 'fa-ellipsis-h'
             };
             return icons[cat] || 'fa-tag';
