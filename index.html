@@ -830,6 +830,8 @@
 
         // --- EVENT LISTENERS ---
         loginBtn.addEventListener('click', handleLogin);
+        txnForm.addEventListener('submit', addTransaction);
+
         // --- PWA SERVICE WORKER ---
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
