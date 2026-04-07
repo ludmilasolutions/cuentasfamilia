@@ -268,7 +268,12 @@
             flex-direction: column;
             justify-content: center;
             align-items: center;
-            min-height: 300px;
+            min-height: 250px;
+            transition: all 0.3s ease;
+        }
+
+        .chart-card.empty {
+            display: none;
         }
 
         .history-card {
@@ -782,9 +787,18 @@
 
         // --- CHART LOGIC ---
         function updateChart(categoryData) {
-            const ctx = document.getElementById('financeChart').getContext('2d');
+            const chartCard = document.querySelector('.chart-card');
             const labels = Object.keys(categoryData);
             const data = Object.values(categoryData);
+
+            if (labels.length === 0) {
+                chartCard.classList.add('empty');
+                return;
+            } else {
+                chartCard.classList.remove('empty');
+            }
+
+            const ctx = document.getElementById('financeChart').getContext('2d');
 
             if (chart) {
                 chart.data.labels = labels;
