@@ -1,0 +1,818 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AFM Finanzas - Gestión de Cuentas</title>
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#833ab4">
+    <link rel="apple-touch-icon" href="icon-192.png">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --primary: #833ab4;
+            --secondary: #fd1d1d;
+            --accent: #fcb045;
+            --bg-dark: #0f0c29;
+            --glass: rgba(255, 255, 255, 0.1);
+            --glass-border: rgba(255, 255, 255, 0.2);
+            --text-main: #ffffff;
+            --text-dim: #b0b0b0;
+            --income: #00f2fe;
+            --expense: #ff0844;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Outfit', sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
+            color: var(--text-main);
+            min-height: 100vh;
+            overflow-x: hidden;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        /* Glassmorphism Styles */
+        .glass-card {
+            background: var(--glass);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+        }
+
+        /* Header & Auth Bar */
+        header {
+            width: 100%;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            margin-bottom: 1rem;
+        }
+
+        .header-content {
+            width: 100%;
+            max-width: 1200px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: 800;
+            background: linear-gradient(to right, var(--income), var(--accent));
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .auth-container {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .user-profile {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: var(--glass);
+            padding: 5px 15px;
+            border-radius: 50px;
+            border: 1px solid var(--glass-border);
+        }
+
+        .user-profile img {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            border: 2px solid var(--income);
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border-radius: 12px;
+            border: none;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            font-size: 0.8rem;
+            letter-spacing: 1px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            outline: none;
+        }
+
+        .btn-google {
+            background: #fff;
+            color: #000;
+        }
+
+        .btn-logout {
+            background: rgba(255, 0, 0, 0.2);
+            color: #ff4d4d;
+            border: 1px solid rgba(255, 0, 0, 0.3);
+        }
+
+        .btn-primary {
+            background: linear-gradient(45deg, var(--income), #4facfe);
+            color: #000;
+        }
+
+        .btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* Main Dashboard */
+        main {
+            width: 100%;
+            max-width: 1200px;
+            display: grid;
+            grid-template-columns: 1fr 1.5fr;
+            gap: 30px;
+            padding: 0 20px 40px;
+        }
+
+        @media (max-width: 900px) {
+            main {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Left Column: Summary & form */
+        .summary-container {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .balance-card {
+            padding: 30px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .balance-card h2 {
+            font-size: 0.9rem;
+            color: var(--text-dim);
+            margin-bottom: 5px;
+        }
+
+        .balance-amount {
+            font-size: 2.5rem;
+            font-weight: 800;
+            margin-bottom: 20px;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        .stat-item {
+            padding: 15px;
+            border-radius: 15px;
+            background: rgba(0, 0, 0, 0.2);
+        }
+
+        .stat-label {
+            font-size: 0.7rem;
+            color: var(--text-dim);
+            text-transform: uppercase;
+        }
+
+        .stat-value {
+            font-size: 1.2rem;
+            font-weight: 700;
+        }
+
+        .stat-value.income { color: var(--income); }
+        .stat-value.expense { color: var(--expense); }
+
+        /* Form Card */
+        .form-card {
+            padding: 25px;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 0.8rem;
+            margin-bottom: 8px;
+            color: var(--text-dim);
+        }
+
+        input, select {
+            width: 100%;
+            padding: 12px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--glass-border);
+            border-radius: 10px;
+            color: #fff;
+            outline: none;
+            transition: all 0.3s;
+        }
+
+        input:focus, select:focus {
+            border-color: var(--income);
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        select option {
+            background: #24243e;
+            color: #fff;
+        }
+
+        /* Right Column: History & Charts */
+        .history-container {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .chart-card {
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            min-height: 300px;
+        }
+
+        .history-card {
+            padding: 25px;
+            flex-grow: 1;
+        }
+
+        .history-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .transactions-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            max-height: 500px;
+            overflow-y: auto;
+            padding-right: 5px;
+        }
+
+        .transactions-list::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        .transactions-list::-webkit-scrollbar-thumb {
+            background: var(--glass-border);
+            border-radius: 10px;
+        }
+
+        .transaction-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 15px;
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 12px;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            animation: slideIn 0.4s ease-out forwards;
+        }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateX(20px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        .transaction-item:hover {
+            transform: translateX(5px);
+            background: rgba(255, 255, 255, 0.06);
+            border-left: 4px solid var(--income);
+        }
+
+        .transaction-item.expense:hover {
+            border-left-color: var(--expense);
+        }
+
+        .txn-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .txn-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1rem;
+        }
+
+        .icon-income { background: rgba(0, 242, 254, 0.15); color: var(--income); box-shadow: 0 0 15px rgba(0, 242, 254, 0.2); }
+        .icon-expense { background: rgba(255, 8, 68, 0.15); color: var(--expense); box-shadow: 0 0 15px rgba(255, 8, 68, 0.2); }
+
+        .txn-details h4 {
+            font-size: 0.95rem;
+            font-weight: 600;
+        }
+
+        .txn-details p {
+            font-size: 0.75rem;
+            color: var(--text-dim);
+        }
+
+        .txn-meta {
+            text-align: right;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            gap: 5px;
+        }
+
+        .txn-amount {
+            font-weight: 700;
+            font-size: 1.1rem;
+        }
+
+        .txn-user {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 0.7rem;
+            color: var(--text-dim);
+            background: rgba(255,255,255,0.05);
+            padding: 3px 10px;
+            border-radius: 20px;
+            border: 1px solid var(--glass-border);
+        }
+
+        .txn-user img {
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+        }
+
+        /* Login Overlay */
+        #login-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(15, 12, 41, 0.9);
+            backdrop-filter: blur(25px);
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            transition: all 0.5s ease;
+        }
+
+        .hidden {
+            opacity: 0;
+            visibility: hidden;
+            pointer-events: none;
+        }
+
+        #delete-btn {
+            background: none;
+            border: none;
+            color: rgba(255,255,255,0.2);
+            cursor: pointer;
+            margin-right: 10px;
+            transition: color 0.3s;
+        }
+
+        #delete-btn:hover {
+            color: var(--expense);
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Login Screen -->
+    <div id="login-overlay">
+        <div class="logo" style="font-size: 4rem; margin-bottom: 2rem;">AFM Finanzas</div>
+        <h1 style="margin-bottom: 1rem; font-size: 2.5rem;">Gestión del Hogar</h1>
+        <p style="color: var(--text-dim); margin-bottom: 3rem; max-width: 500px; font-size: 1.1rem;">
+            Una experiencia premium para gestionar tus cuentas diarias junto a tu familia.
+        </p>
+        <button id="login-btn" class="btn btn-google" style="padding: 15px 30px; font-size: 1rem;">
+            <img src="https://upload.wikimedia.org/wikipedia/commons/5/53/Google_%22G%22_Logo.svg" width="22">
+            Iniciar sesión con Google
+        </button>
+    </div>
+
+    <!-- App Header -->
+    <header>
+        <div class="header-content">
+            <div class="logo">AFM Finanzas</div>
+            <div class="auth-container" id="auth-info">
+                <!-- User info will be injected here -->
+            </div>
+        </div>
+    </header>
+
+    <main id="app-content" class="hidden">
+        <!-- Left: Summary & Stats -->
+        <div class="summary-container">
+            <div class="glass-card balance-card">
+                <h2>Saldo Consolidado</h2>
+                <div class="balance-amount" id="total-balance">$0,00</div>
+                <div class="stats-grid">
+                    <div class="stat-item">
+                        <div class="stat-label">Ingresos Totales</div>
+                        <div class="stat-value income" id="total-income">$0,00</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-label">Gastos Totales</div>
+                        <div class="stat-value expense" id="total-expense">$0,00</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Form to add movement -->
+            <div class="glass-card form-card">
+                <h3 style="margin-bottom: 25px; display: flex; align-items: center; gap: 10px;">
+                    <i class="fas fa-wallet" style="color: var(--accent);"></i> Nuevo Movimiento
+                </h3>
+                <form id="txn-form">
+                    <div class="form-group">
+                        <label>Descripción</label>
+                        <input type="text" id="txn-desc" placeholder="Ej: Compras del mes, Bono..." required>
+                    </div>
+                    <div class="form-group" style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                        <div>
+                            <label>Monto</label>
+                            <input type="number" id="txn-amount" step="0.01" placeholder="0.00" required>
+                        </div>
+                        <div>
+                            <label>Tipo de Operación</label>
+                            <select id="txn-type">
+                                <option value="expense">📉 Gasto</option>
+                                <option value="income">📈 Ingreso</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Categoría</label>
+                        <select id="txn-category">
+                            <option value="Comida">🛒 Comida y Bebidas</option>
+                            <option value="Servicios">⚡ Servicios Públicos</option>
+                            <option value="Hogar">🏠 Equipamiento Hogar</option>
+                            <option value="Salud">🏥 Salud y Cuidados</option>
+                            <option value="Ocio">🎭 Entretenimiento</option>
+                            <option value="Sueldo">💰 Sueldo / Ingreso</option>
+                            <option value="Transporte">🚗 Transporte</option>
+                            <option value="Educacion">📚 Educación</option>
+                            <option value="Otro">✨ Otros Gastos</option>
+                        </select>
+                    </div>
+                    <button type="submit" class="btn btn-primary" style="width: 100%; justify-content: center; padding: 15px; margin-top: 10px;">
+                        <i class="fas fa-check-circle"></i> Registrar Movimiento
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Right: List & Chart -->
+        <div class="history-container">
+            <div class="glass-card chart-card">
+                <canvas id="financeChart"></canvas>
+            </div>
+
+            <div class="glass-card history-card">
+                <div class="history-header">
+                    <h3>Movimientos Recientes</h3>
+                    <div id="txn-count" style="background: rgba(255,255,255,0.1); padding: 4px 12px; border-radius: 20px; font-size: 0.75rem;">0 registros</div>
+                </div>
+                <div class="transactions-list" id="txn-list">
+                    <div style="text-align: center; color: var(--text-dim); padding: 40px;">
+                        <i class="fas fa-search" style="font-size: 2rem; margin-bottom: 1rem; opacity: 0.3;"></i>
+                        <p>No se encontraron movimientos.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Firebase SDK (Modular) -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+        import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, serverTimestamp, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+        // Firebase Configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyAK5WWGmZg8IMBbLyR1LM4mxLK8Vs6Ypok",
+            authDomain: "gestiondecuentas-9271b.firebaseapp.com",
+            projectId: "gestiondecuentas-9271b",
+            storageBucket: "gestiondecuentas-9271b.firebasestorage.app",
+            messagingSenderId: "396015200664",
+            appId: "1:396015200664:web:2dc0c923ef46cf6e78a3ed"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+        const provider = new GoogleAuthProvider();
+
+        // DOM Elements
+        const loginBtn = document.getElementById('login-btn');
+        const loginOverlay = document.getElementById('login-overlay');
+        const appContent = document.getElementById('app-content');
+        const authInfo = document.getElementById('auth-info');
+        const txnForm = document.getElementById('txn-form');
+        const txnList = document.getElementById('txn-list');
+        const totalBalanceEl = document.getElementById('total-balance');
+        const totalIncomeEl = document.getElementById('total-income');
+        const totalExpenseEl = document.getElementById('total-expense');
+        const txnCountEl = document.getElementById('txn-count');
+
+        let currentUser = null;
+        let chart = null;
+
+        // --- AUTH FUNCTIONS ---
+        const handleLogin = async () => {
+            try {
+                await signInWithPopup(auth, provider);
+            } catch (error) {
+                console.error("Error signing in:", error);
+                alert("No se pudo iniciar sesión. Verifica la configuración de Firebase.");
+            }
+        };
+
+        const handleLogout = () => signOut(auth);
+
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                currentUser = user;
+                loginOverlay.classList.add('hidden');
+                appContent.classList.remove('hidden');
+                renderAuthBar(user);
+                initRealtimeUpdates();
+            } else {
+                currentUser = null;
+                loginOverlay.classList.remove('hidden');
+                appContent.classList.add('hidden');
+                authInfo.innerHTML = '';
+            }
+        });
+
+        function renderAuthBar(user) {
+            authInfo.innerHTML = `
+                <div class="user-profile">
+                    <img src="${user.photoURL}" alt="${user.displayName}">
+                    <span>${user.displayName.split(' ')[0]}</span>
+                </div>
+                <button id="logout-btn" class="btn btn-logout" title="Cerrar Sesión">
+                    <i class="fas fa-power-off"></i>
+                </button>
+            `;
+            document.getElementById('logout-btn').addEventListener('click', handleLogout);
+        }
+
+        // --- FIRESTORE FUNCTIONS ---
+        const addTransaction = async (e) => {
+            e.preventDefault();
+            if (!currentUser) return;
+
+            const description = document.getElementById('txn-desc').value;
+            const amount = parseFloat(document.getElementById('txn-amount').value);
+            const type = document.getElementById('txn-type').value;
+            const category = document.getElementById('txn-category').value;
+
+            try {
+                const btn = e.target.querySelector('button');
+                btn.disabled = true;
+                btn.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i> Procesando...';
+
+                await addDoc(collection(db, "transactions"), {
+                    description,
+                    amount,
+                    type,
+                    category,
+                    userId: currentUser.uid,
+                    userName: currentUser.displayName,
+                    userPhoto: currentUser.photoURL,
+                    createdAt: serverTimestamp()
+                });
+
+                txnForm.reset();
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-check-circle"></i> Registrar Movimiento';
+            } catch (error) {
+                console.error("Error adding transaction:", error);
+                alert("Error al guardar en la base de datos.");
+            }
+        };
+
+        const deleteTransaction = async (id) => {
+            if (confirm('¿Estás seguro de eliminar este registro?')) {
+                try {
+                    await deleteDoc(doc(db, "transactions", id));
+                } catch (error) {
+                    console.error("Error deleting:", error);
+                }
+            }
+        };
+
+        window.deleteTransaction = deleteTransaction; // Exposed to HTML
+
+        function initRealtimeUpdates() {
+            const q = query(collection(db, "transactions"), orderBy("createdAt", "desc"));
+            
+            onSnapshot(q, (snapshot) => {
+                const transactions = [];
+                snapshot.forEach((doc) => {
+                    transactions.push({ id: doc.id, ...doc.data() });
+                });
+                updateUI(transactions);
+            });
+        }
+
+        // --- UI UPDATES ---
+        function updateUI(transactions) {
+            let income = 0;
+            let expense = 0;
+            const categories = {};
+
+            txnList.innerHTML = '';
+            
+            transactions.forEach(t => {
+                if (t.type === 'income') {
+                    income += t.amount;
+                } else {
+                    expense += t.amount;
+                    categories[t.category] = (categories[t.category] || 0) + t.amount;
+                }
+
+                const date = t.createdAt ? t.createdAt.toDate().toLocaleDateString('es-AR', { day: '2-digit', month: 'short' }) : 'Hoy';
+                const item = document.createElement('div');
+                item.className = `transaction-item ${t.type}`;
+                item.innerHTML = `
+                    <div class="txn-info">
+                        <div class="txn-icon icon-${t.type}">
+                            <i class="fas ${getIcon(t.category)}"></i>
+                        </div>
+                        <div class="txn-details">
+                            <h4>${t.description}</h4>
+                            <p>${t.category} • ${date}</p>
+                        </div>
+                    </div>
+                    <div class="txn-meta">
+                        <div class="txn-amount" style="color: var(--${t.type})">
+                            ${t.type === 'income' ? '+' : '-'}${formatCurrency(t.amount)}
+                        </div>
+                        <div style="display: flex; align-items: center;">
+                            ${t.userId === currentUser.uid ? `<button id="delete-btn" onclick="deleteTransaction('${t.id}')"><i class="fas fa-trash-alt"></i></button>` : ''}
+                            <div class="txn-user">
+                                <img src="${t.userPhoto}" alt="${t.userName}">
+                                ${t.userName.split(' ')[0]}
+                            </div>
+                        </div>
+                    </div>
+                `;
+                txnList.appendChild(item);
+            });
+
+            // Update Totals
+            const balance = income - expense;
+            totalBalanceEl.textContent = formatCurrency(balance);
+            totalBalanceEl.style.color = balance >= 0 ? 'var(--income)' : 'var(--expense)';
+            totalIncomeEl.textContent = formatCurrency(income);
+            totalExpenseEl.textContent = formatCurrency(expense);
+            txnCountEl.textContent = `${transactions.length} registros`;
+
+            if (transactions.length === 0) {
+                txnList.innerHTML = `
+                    <div style="text-align: center; color: var(--text-dim); padding: 60px;">
+                        <i class="fas fa-receipt" style="font-size: 3rem; margin-bottom: 1rem; opacity: 0.1;"></i>
+                        <p>No hay movimientos registrados.</p>
+                    </div>
+                `;
+            }
+
+            updateChart(categories);
+        }
+
+        function getIcon(cat) {
+            const icons = {
+                'Comida': 'fa-utensils',
+                'Servicios': 'fa-plug',
+                'Hogar': 'fa-couch',
+                'Salud': 'fa-stethoscope',
+                'Ocio': 'fa-gamepad',
+                'Sueldo': 'fa-hand-holding-usd',
+                'Transporte': 'fa-bus',
+                'Educacion': 'fa-graduation-cap',
+                'Otro': 'fa-ellipsis-h'
+            };
+            return icons[cat] || 'fa-tag';
+        }
+
+        function formatCurrency(num) {
+            return new Intl.NumberFormat('es-AR', { 
+                style: 'currency', 
+                currency: 'ARS',
+                minimumFractionDigits: 2 
+            }).format(num);
+        }
+
+        // --- CHART LOGIC ---
+        function updateChart(categoryData) {
+            const ctx = document.getElementById('financeChart').getContext('2d');
+            const labels = Object.keys(categoryData);
+            const data = Object.values(categoryData);
+
+            if (chart) {
+                chart.data.labels = labels;
+                chart.data.datasets[0].data = data;
+                chart.update();
+            } else {
+                chart = new Chart(ctx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            data: data,
+                            backgroundColor: [
+                                '#833ab4', '#fd1d1d', '#fcb045', '#009ffd', 
+                                '#2af598', '#ff0844', '#f9d423', '#00f2fe'
+                            ],
+                            borderColor: 'transparent',
+                            borderWidth: 0,
+                            hoverOffset: 20
+                        }]
+                    },
+                    options: {
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'right',
+                                labels: { 
+                                    color: '#eee', 
+                                    padding: 15,
+                                    font: { family: 'Outfit', size: 11 } 
+                                }
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: (context) => ` ${context.label}: ${formatCurrency(context.raw)}`
+                                }
+                            }
+                        },
+                        cutout: '75%'
+                    }
+                });
+            }
+        }
+
+        // --- EVENT LISTENERS ---
+        loginBtn.addEventListener('click', handleLogin);
+        // --- PWA SERVICE WORKER ---
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./sw.js')
+                    .then(reg => console.log('SW Registered!', reg))
+                    .catch(err => console.log('SW registration failed: ', err));
+            });
+        }
+    </script>
+</body>
+</html>
