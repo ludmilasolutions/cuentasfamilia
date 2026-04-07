@@ -614,19 +614,29 @@
         // --- FIRESTORE FUNCTIONS ---
         const addTransaction = async (e) => {
             e.preventDefault();
-            if (!currentUser) return;
+            console.log("Intentando guardar movimiento...", { currentUser });
+
+            if (!currentUser) {
+                alert("Debes estar iniciado sesión para registrar movimientos.");
+                return;
+            }
 
             const description = document.getElementById('txn-desc').value;
             const amount = parseFloat(document.getElementById('txn-amount').value);
             const type = document.getElementById('txn-type').value;
             const category = document.getElementById('txn-category').value;
 
+            if (isNaN(amount) || amount <= 0) {
+                alert("Por favor, ingresa un monto válido.");
+                return;
+            }
+
             try {
                 const btn = e.target.querySelector('button');
                 btn.disabled = true;
                 btn.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i> Procesando...';
 
-                await addDoc(collection(db, "transactions"), {
+                const data = {
                     description,
                     amount,
                     type,
@@ -635,14 +645,23 @@
                     userName: currentUser.displayName,
                     userPhoto: currentUser.photoURL,
                     createdAt: serverTimestamp()
-                });
+                };
+
+                console.log("Datos a enviar:", data);
+
+                const docRef = await addDoc(collection(db, "transactions"), data);
+                console.log("¡Éxito! ID del documento:", docRef.id);
 
                 txnForm.reset();
                 btn.disabled = false;
                 btn.innerHTML = '<i class="fas fa-check-circle"></i> Registrar Movimiento';
             } catch (error) {
-                console.error("Error adding transaction:", error);
-                alert("Error al guardar en la base de datos.");
+                console.error("Error completo de Firebase:", error);
+                alert(`Error al guardar: ${error.message}`);
+                
+                const btn = e.target.querySelector('button');
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-check-circle"></i> Registrar Movimiento';
             }
         };
 
